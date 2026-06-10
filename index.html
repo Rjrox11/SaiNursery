@@ -242,6 +242,8 @@ canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9999}
 .soc-btn{display:inline-flex;align-items:center;gap:.3rem;padding:8px 14px;border-radius:30px;font-size:12px;font-weight:700;text-decoration:none}
 .sb-insta{background:linear-gradient(135deg,#f09433,#dc2743,#bc1888);color:#fff}
 .sb-fb{background:#1877F2;color:#fff}
+.sb-google{background:linear-gradient(135deg,var(--gold),var(--gold3));color:var(--red3)}
+.soc-btn{border:none;cursor:pointer;font-family:'Nunito',sans-serif}
 .enter-another-btn{margin-top:1rem;width:100%;padding:11px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:rgba(255,248,236,.6);cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .enter-another-btn:hover{border-color:rgba(245,197,24,.3);color:var(--gold2)}
 
@@ -462,7 +464,7 @@ canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9999}
         <div class="event-badge">🎉 Teeyan Da Mela · 14 June 2026</div>
       </div>
 
-      <div class="raffle-banner">🏆 3 Lucky Draws · Pick ONE below · Winners drawn 5:00 PM, 14 June 2026 🏆</div>
+      <div class="raffle-banner">🏆 3 Lucky Draws · Pick ONE below · Winners drawn 4:00 PM, 14 June 2026 🏆</div>
 
       <div class="raffle-sections">
 
@@ -527,7 +529,7 @@ canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9999}
         <div class="f-label">Mobile number</div>
         <input class="f-input" type="tel" id="fMobile" placeholder="e.g. 0412 345 678" autocomplete="tel">
         <button class="submit-btn" onclick="submitEntry()">🎉 Enter the Draw!</button>
-        <div class="terms-note">By entering you agree to receive occasional SMS updates from Sai Nursery. Winner announced at 5:00 PM at our stall.</div>
+        <div class="terms-note">By entering you agree to receive occasional SMS updates from Sai Nursery. Winner announced from 4:00 PM at the Main Stage inside the hall.</div>
       </div>
     </div>
 
@@ -539,7 +541,7 @@ canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9999}
         <span class="success-anim">🎊</span>
         <div class="success-greeting" id="sGreeting">You're in!</div>
         <div class="success-title">You're in<br>the draw!</div>
-        <div class="success-sub">Head to our stall at 5:00 PM for the live draw.<br>Winner announced on video broadcast! 🎥</div>
+        <div class="success-sub">Head to the Main Stage inside the hall from 4:00 PM for the live draw.<br>Winner announced on video broadcast! 🎥</div>
         <div class="ticket-box">
           <div class="ticket-lbl">Action completed</div>
           <div class="ticket-action" id="sAction"></div>
@@ -552,10 +554,9 @@ canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9999}
             <div id="sEntriesNum" style="font-size:1.2rem;font-weight:900;color:#F5C518;font-family:'Bebas Neue',sans-serif;line-height:1.1;text-shadow:0 0 12px rgba(245,197,24,.5)">1 raffle</div>
           </div>
         </div>
-        <div style="font-size:13px;color:var(--lime);font-weight:700;margin-bottom:.6rem">🌟 Want more chances? Enter the other 2 raffles too!</div>
-        <div class="soc-btns">
-          <a href="https://www.instagram.com/sainurserypendlehill/" target="_blank" class="soc-btn sb-insta">📸 Instagram</a>
-          <a href="https://www.facebook.com/SaiNurseryPendleHill" target="_blank" class="soc-btn sb-fb">👍 Facebook</a>
+        <div id="moreRafflesWrap">
+          <div id="moreRafflesLabel" style="font-size:13px;color:var(--lime);font-weight:700;margin-bottom:.6rem">🌟 Want more chances? Enter the other raffles too!</div>
+          <div class="soc-btns" id="moreRaffles"></div>
         </div>
         <button class="enter-another-btn" onclick="resetEntry()">← Enter another raffle / person</button>
       </div>
@@ -813,6 +814,11 @@ const SOCIAL_URLS = {
   google:'https://www.google.com/search?q=sai+nursery+pendle+hill#lrd=0x6b12994c884f495b:0x5f71a3d4420449c3,3,,,,',
   facebook:'https://www.facebook.com/SaiNurseryPendleHill'
 };
+const RAFFLE_INFO = {
+  google:{label:'⭐ Left a Google Review',short:'⭐ Google Review',prize:'Mandarin Tree',cls:'sb-google'},
+  instagram:{label:'📸 Tagged us on Instagram',short:'📸 Instagram',prize:'Grafted Mango',cls:'sb-insta'},
+  facebook:{label:'👍 Followed on Facebook',short:'👍 Facebook',prize:'Happy Plant',cls:'sb-fb'}
+};
 
 let chosenAction='',chosenLabel='';
 let drawEntries=[];
@@ -895,10 +901,35 @@ function submitEntry(){
   document.getElementById('sGreeting').textContent=name.split(' ')[0]+", you're in!";
   document.getElementById('sAction').textContent=chosenLabel;
   // Show entries earned
+  // Work out which raffles this person (by mobile) has now entered, and which remain
+  const enteredActions=new Set(stored.filter(e=>(e.mobile||'').replace(/\s+/g,'')===normMobile).map(e=>e.action));
+  const remaining=Object.keys(RAFFLE_INFO).filter(a=>!enteredActions.has(a));
+
   const el=document.getElementById('sEntriesNum');
-  if(el) el.textContent='1 raffle';
+  if(el) el.textContent=enteredActions.size+(enteredActions.size===1?' raffle':' raffles');
+
+  const wrap=document.getElementById('moreRafflesWrap');
+  const label=document.getElementById('moreRafflesLabel');
+  const more=document.getElementById('moreRaffles');
+  if(remaining.length){
+    label.textContent=`🌟 Want more chances? Enter the other ${remaining.length===1?'raffle':'raffles'} too!`;
+    more.innerHTML=remaining.map(a=>{
+      const r=RAFFLE_INFO[a];
+      return `<button class="soc-btn ${r.cls}" onclick="enterMoreRaffle('${a}')">${r.short} → ${r.prize}</button>`;
+    }).join('');
+    wrap.style.display='';
+  } else {
+    label.textContent="🎉 You're entered into ALL 3 raffles — best of luck!";
+    more.innerHTML='';
+    wrap.style.display='';
+  }
+
   showStep('C');
   fireConfetti(true);
+}
+
+function enterMoreRaffle(type){
+  pickAction(type,RAFFLE_INFO[type].label,'');
 }
 
 function resetEntry(){
