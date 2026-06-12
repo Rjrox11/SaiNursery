@@ -675,6 +675,7 @@ canvas#confetti{position:fixed;inset:0;pointer-events:none;z-index:9999}
       </div>
       <div class="draw-btns">
         <button class="draw-secondary" onclick="loadFromSheet()">⬇️ Load from Sheet</button>
+        <button class="draw-secondary" onclick="loadSampleData()">🧪 Load Sample Data</button>
         <button class="draw-secondary" onclick="clearDrawEntries()">🗑️ Clear all</button>
         <button class="start-btn" id="startBtn" onclick="startDraw()" disabled>🎰 START THE DRAW</button>
       </div>
@@ -1032,8 +1033,9 @@ function loadDrawEntries(){
 }
 
 function selectRaffle(key){
-  if(drawRunning) return;
   currentRaffle=key;
+  drawRunning=false;
+  document.getElementById('winnerOverlay').classList.remove('show');
   drawEntries=rafflePools[key]||[];
   document.querySelectorAll('.raffle-tab').forEach(b=>b.classList.toggle('active',b.dataset.raffle===key));
   document.getElementById('raffleTitle').textContent=RAFFLES[key].title;
@@ -1073,6 +1075,22 @@ function loadManual(){
   document.getElementById('manualNames').value='';
   updateDrawStats();
   setDrawStatus(`✅ Added to ${RAFFLES[currentRaffle].prize} raffle — ${drawEntries.length} entries`);
+}
+
+function loadSampleData(){
+  const SAMPLE_NAMES={
+    google:['Priya Sharma','Rahul Gupta','Simran Kaur','Aman Singh','Neha Patel','Jasleen Brar','Vikram Rao','Sunita Devi'],
+    instagram:['Karan Mehta','Anjali Verma','Harpreet Singh','Pooja Nair','Rohan Joshi','Manpreet Kaur','Divya Iyer'],
+    facebook:['Gurpreet Singh','Kiran Bedi','Arjun Kapoor','Meera Pillai','Tarun Chawla','Ramandeep Kaur']
+  };
+  if(!confirm('Add sample test entries to all 3 raffles? You can remove them later with "Clear all".')) return;
+  Object.keys(SAMPLE_NAMES).forEach(key=>{
+    const added=SAMPLE_NAMES[key].map(n=>({name:n,action:'Sample Data',_action:key}));
+    rafflePools[key]=[...rafflePools[key],...added].filter((e,i,a)=>a.findIndex(x=>x.name===e.name)===i);
+  });
+  drawEntries=rafflePools[currentRaffle];
+  updateDrawStats();
+  setDrawStatus('🧪 Sample data loaded for all 3 raffles — try the draw, then "Clear all" to remove.');
 }
 
 function clearDrawEntries(){
